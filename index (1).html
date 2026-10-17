@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Türkçe Geçmiş Zaman — Yazma Oyunu</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--ink:#172033;--muted:#667085;--accent:#6558d3;--good:#16865c;--bad:#c43d4d;--line:#e5e8f0}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#f4f6fb,#e9e7ff);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.app{width:min(720px,100%);background:var(--card);border-radius:24px;padding:clamp(22px,5vw,42px);box-shadow:0 18px 55px #29305b1a}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.pill{background:#f0efff;color:var(--accent);padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700}
+h1{font-size:clamp(25px,4vw,34px);margin:18px 0 8px}p{color:var(--muted);line-height:1.6}.progress{height:8px;background:#eef0f6;border-radius:9px;overflow:hidden;margin:22px 0}.bar{height:100%;width:0;background:var(--accent);transition:width .25s}
+.prompt{font-size:14px;color:var(--muted);margin-bottom:8px}.verb{font-size:clamp(30px,6vw,42px);font-weight:800;letter-spacing:-1px;margin:0 0 5px}.person{font-size:19px;color:var(--accent);font-weight:700;margin-bottom:24px}
+.inputrow{display:flex;gap:10px}.answer{flex:1;min-width:0;border:2px solid var(--line);border-radius:13px;padding:15px 16px;font-size:19px;outline:none;transition:border .2s}.answer:focus{border-color:var(--accent)}button{border:0;border-radius:13px;padding:13px 19px;font-size:15px;font-weight:750;cursor:pointer;transition:transform .12s,opacity .12s}button:active{transform:scale(.98)}button:disabled{opacity:.5;cursor:not-allowed}.primary{background:var(--accent);color:white}.secondary{background:#f0efff;color:var(--accent)}.feedback{min-height:70px;margin-top:17px;border-radius:13px;padding:13px 15px;background:#f8f9fc;line-height:1.55}.feedback.good{background:#eaf8f1;color:#116d4b}.feedback.bad{background:#fff0f1;color:#a72d3b}.bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}.score{font-size:14px;color:var(--muted)}.hidden{display:none}.result{text-align:center;padding:18px 0}.result .big{font-size:54px;font-weight:850;color:var(--accent);margin:8px}.hint{font-size:13px;color:var(--muted);margin-top:12px}.accentword{font-weight:800}
+@media(max-width:480px){.inputrow{flex-direction:column}.inputrow button{width:100%}.app{border-radius:18px}}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="top"><span class="pill">TÜRKÇE · A1/A2</span><span class="pill" id="counter">Soru 1 / 10</span></div>
+  <h1>Geçmiş Zaman Yazma Oyunu</h1>
+  <p>动词过去时变位练习：根据动词原形和人称，输入正确的 <b>-DI'lı geçmiş zaman</b> 形式。</p>
+  <div class="progress"><div class="bar" id="bar"></div></div>
+  <section id="quiz">
+    <div class="prompt">把这个动词变成指定人称的过去式：</div>
+    <div class="verb" id="verb">gelmek</div>
+    <div class="person" id="person">Ben (我)</div>
+    <form id="form" class="inputrow">
+      <input class="answer" id="answer" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="在这里输入过去式…" aria-label="过去式答案">
+      <button class="primary" id="checkBtn" type="submit">Kontrol Et ✓</button>
+    </form>
+    <div class="feedback" id="feedback" aria-live="polite">提示：注意词干变化、元音和人称词尾。</div>
+    <div class="bottom"><span class="score" id="score">正确：0 · 错误：0</span><button class="secondary hidden" id="nextBtn" type="button">下一题 →</button></div>
+    <div class="hint">大小写不影响判分；请使用土耳其语字符，例如 ı、ğ、ş、ç、ö、ü。</div>
+  </section>
+  <section id="result" class="result hidden">
+    <div class="pill">TAMAMLANDI!</div>
+    <h2>练习完成！</h2><div class="big" id="finalScore">0 / 10</div>
+    <p id="summary"></p>
+    <button class="primary" id="restartBtn" type="button">Tekrar Oyna ↻</button>
+    <div id="review" style="text-align:left;margin-top:24px"></div>
+  </section>
+</main>
+<script>
+const questions = [
+ {v:"gelmek",p:"Ben",cn:"我",a:"geldim"},
+ {v:"gitmek",p:"Sen",cn:"你",a:"gittin"},
+ {v:"yapmak",p:"O",cn:"他/她",a:"yaptı"},
+ {v:"çıkmak",p:"Biz",cn:"我们",a:"çıktık"},
+ {v:"bakmak",p:"Siz",cn:"你们/您",a:"baktınız"},
+ {v:"görmek",p:"Ben",cn:"我",a:"gördüm"},
+ {v:"okumak",p:"Onlar",cn:"他们/她们",a:"okudular"},
+ {v:"içmek",p:"Sen",cn:"你",a:"içtin"},
+ {v:"yemek",p:"O",cn:"他/她",a:"yedi"},
+ {v:"almak",p:"Biz",cn:"我们",a:"aldık"},
+ {v:"buluşmak",p:"Siz",cn:"你们/您",a:"buluştunuz"},
+ {v:"uyumak",p:"Ben",cn:"我",a:"uyudum"},
+ {v:"konuşmak",p:"Sen",cn:"你",a:"konuştun"},
+ {v:"yazmak",p:"O",cn:"他/她",a:"yazdı"},
+ {v:"açmak",p:"Biz",cn:"我们",a:"açtık"},
+ {v:"dinlemek",p:"Onlar",cn:"他们/她们",a:"dinlediler"}
+];
+const $=id=>document.getElementById(id);
+let deck=[],idx=0,correct=0,wrong=0,locked=false,review=[];
+function norm(s){return s.trim().toLocaleLowerCase("tr-TR").replace(/\s+/g," ")}
+function shuffle(arr){return [...arr].sort(()=>Math.random()-.5)}
+function start(){deck=shuffle(questions).slice(0,10);idx=0;correct=0;wrong=0;locked=false;review=[];$("quiz").classList.remove("hidden");$("result").classList.add("hidden");render()}
+function render(){locked=false;const q=deck[idx];$("counter").textContent=`Soru ${idx+1} / ${deck.length}`;$("bar").style.width=`${idx/deck.length*100}%`;$("verb").textContent=q.v;$("person").textContent=`${q.p} (${q.cn})`;$("answer").value="";$("answer").disabled=false;$("checkBtn").disabled=false;$("checkBtn").classList.remove("hidden");$("nextBtn").classList.add("hidden");$("feedback").className="feedback";$("feedback").textContent="提示：注意词干变化、元音和人称词尾。";$("score").textContent=`正确：${correct} · 错误：${wrong}`;$("answer").focus()}
+$("form").addEventListener("submit",e=>{e.preventDefault();if(locked)return;const q=deck[idx],given=norm($("answer").value);if(!given){$("feedback").textContent="请先输入答案。";$("answer").focus();return}locked=true;const ok=given===norm(q.a);if(ok)correct++;else wrong++;review.push({q,given,ok});$("feedback").className="feedback "+(ok?"good":"bad");$("feedback").innerHTML=ok?`<b>Doğru! ✓</b> 答对了：<span class="accentword">${q.p} ${q.a}</span>`:`<b>Tekrar dene! ✗</b> 正确答案是：<span class="accentword">${q.p} ${q.a}</span><br>你的答案：${escapeHtml($("answer").value)}`;$("score").textContent=`正确：${correct} · 错误：${wrong}`;$("answer").disabled=true;$("checkBtn").disabled=true;$("nextBtn").textContent=idx===deck.length-1?"结果を見る →":"下一题 →";$("nextBtn").classList.remove("hidden")});
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+$("nextBtn").addEventListener("click",()=>{if(idx<deck.length-1){idx++;render()}else finish()});
+function finish(){$("quiz").classList.add("hidden");$("result").classList.remove("hidden");$("bar").style.width="100%";$("finalScore").textContent=`${correct} / ${deck.length}`;const pct=Math.round(correct/deck.length*100);$("summary").textContent=`正确率 ${pct}%。${pct>=80?"Harika! Çok iyi! 做得非常好！":pct>=60?"İyi iş! 再练习几次会更熟练！":"Biraz daha pratik yap! 多练习动词词干和人称词尾。"}`;$("review").innerHTML="<h3>本次答题回顾</h3>"+review.map((r,i)=>`<div style="padding:10px 0;border-bottom:1px solid #e5e8f0"><b>${i+1}. ${r.q.v} — ${r.q.p}</b><div style="color:${r.ok?'#16865c':'#c43d4d'}">${r.ok?'✓':'✗'} 你的答案：${escapeHtml(r.given)}${r.ok?'':` · 正确答案：${r.q.a}`}</div></div>`).join("")}
+$("restartBtn").addEventListener("click",start);start();
+</script>
+</body>
+</html>
